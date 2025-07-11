@@ -1,0 +1,12 @@
+{
+  "patients": [
+    {
+      "id": "1844",
+      "name": "abhi",
+      "age": "22",
+      "gender": "Male",
+      "condition": "fever",
+      "lastVisit": "2020-09-09"
+    }
+  ]
+}

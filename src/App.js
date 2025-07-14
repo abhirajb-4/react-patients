@@ -1,50 +1,51 @@
-// App.js
-import React, { useState } from 'react';
+import logo from './logo.svg';
+import './App.css';
+import React, { useState, useEffect } from 'react';
+import { addPatient,getPatients } from './patientService';
 import PatientRegistrationForm from './PatientRegistrationForm';
 import { PatientInformation } from './PatientInformation';
-import { addPatient } from './patientService.js';   // <- optional, see handleRegister
-import './App.css';
-
 const App = () => {
-  // The ID the user wants to look up
   const [patientID, setPatientID] = useState('');
-
-  // Keep form input in sync with state
-  const handleIDChange = (e) => setPatientID(e.target.value);
-
-  // Callback for PatientRegistrationForm
-  const handleRegister = async (patientData) => {
+  const generatePatientID = (patients) => {
+    if (patients.length === 0) {
+      return 'P001'; // If no patients exist yet, start with P001
+    }
+  
+    const lastPatient = patients[patients.length - 1];
+    const lastPatientID = lastPatient.patientID ? parseInt(lastPatient.patientID.slice(1)) : 0; // Extract the numeric part if patientID exists, otherwise start with 0
+    const newID = 'P' + String(lastPatientID + 1).padStart(3, '0'); // Generate new patient ID
+    return newID;
+  };
+  // Function to register a new patient
+  const registerPatient = async (newPatient) => {
     try {
-      // Persist to backend (or skip this if your tests mock addPatient)
-      await addPatient(patientData);
-      alert('Patient registered successfully!');
-    } catch (err) {
-      console.error('Failed to register patient', err);
-      alert('Registration failed—see console for details.');
+      const patients = await getPatients();
+      console.log(patients);
+      const newPatientID = generatePatientID(patients);
+     
+      const { id, ...patientDataWithoutID } = newPatient;
+      const patientWithID = { ...patientDataWithoutID, patientID: newPatientID };
+      const addedPatient = await addPatient(patientWithID);
+      return addedPatient;
+    } catch (error) {
+      console.error('Error registering patient:', error);
+      throw error;
     }
   };
 
   return (
-    <div className="app-container">
-      <h1>Patient Management</h1>
-
-      {/* Patient registration form */}
-      <PatientRegistrationForm onRegister={handleRegister} />
-
-      <hr />
-
-      {/* Patient ID lookup */}
-      <div className="lookup-container">
-        <input
-          type="text"
-          placeholder="Enter Patient ID"
-          value={patientID}
-          onChange={handleIDChange}
-        />
-      </div>
-
-      {/* Patient information (renders once patientID isn’t empty) */}
-      <PatientInformation patientID={patientID.trim()} />
+    <div>
+      <h1>Patient Management Platform</h1>
+      <h2>Patient Registration</h2>
+      <PatientRegistrationForm onRegister={registerPatient} />
+      <h2>Retrieve Patient Information</h2>
+      <input
+        type="text"
+        value={patientID}
+        onChange={(e) => setPatientID(e.target.value)}
+        placeholder="Enter Patient ID"
+      />
+      <PatientInformation patientID={patientID} />
     </div>
   );
 };
